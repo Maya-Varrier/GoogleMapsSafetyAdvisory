@@ -19,8 +19,6 @@ public class FeedbackController {
 
     @PostMapping
     public Feedback save(@RequestBody Feedback feedback) {
-        System.out.println("Origin: " + feedback.getOrigin());
-        System.out.println("Message: " + feedback.getMessage());
         return service.save(feedback);
     }
 
