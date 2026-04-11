@@ -6,8 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.time.LocalTime;
 
-    @Entity
+@Entity
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -25,8 +26,9 @@ import java.time.Instant;
         private String unsafeLocationFrom;
         private String unsafeLocationTo;
 
-        // Time when area is unsafe (store as String for now, can improve later)
-        private String unsafeTime;
+        // Time when area is unsafe
+        private LocalTime unsafeTimeFrom;
+        private LocalTime unsafeTimeTo;
 
         // User description
         @Column(length = 1000)
