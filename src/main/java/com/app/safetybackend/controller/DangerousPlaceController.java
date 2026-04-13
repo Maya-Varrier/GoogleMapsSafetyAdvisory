@@ -33,4 +33,9 @@ public class DangerousPlaceController {
     ) {
         return service.getPlacesAlongRoute(routePoints);
     }
+
+    @GetMapping("/all")
+    public List<DangerousPlace> getAllPlaces() {
+        return service.getAllPlaces();
+    }
 }

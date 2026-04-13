@@ -48,4 +48,8 @@ public class DangerousPlaceService {
                 latMin, latMax, lonMin, lonMax
         );
     }
+
+    public List<DangerousPlace> getAllPlaces() {
+        return repo.findAll();
+    }
 }
