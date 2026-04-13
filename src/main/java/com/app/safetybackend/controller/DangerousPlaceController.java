@@ -1,6 +1,7 @@
 package com.app.safetybackend.controller;
 
 import com.app.safetybackend.entity.DangerousPlace;
+import com.app.safetybackend.model.RoutePoint;
 import com.app.safetybackend.service.DangerousPlaceService;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,5 +25,12 @@ public class DangerousPlaceController {
             @RequestParam double lonMax
     ) {
         return service.getPlacesNearRoute(latMin, latMax, lonMin, lonMax);
+    }
+
+    @PostMapping("/route-risk")
+    public List<DangerousPlace> getPlacesAlongRoute(
+            @RequestBody List<RoutePoint> routePoints
+    ) {
+        return service.getPlacesAlongRoute(routePoints);
     }
 }

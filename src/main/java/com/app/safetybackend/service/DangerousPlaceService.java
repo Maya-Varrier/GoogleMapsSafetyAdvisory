@@ -2,9 +2,10 @@ package com.app.safetybackend.service;
 
 import com.app.safetybackend.entity.DangerousPlace;
 import com.app.safetybackend.repository.DangerousPlaceRepository;
+import com.app.safetybackend.model.RoutePoint; // ✅ ADD THIS
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
 
 @Service
 public class DangerousPlaceService {
@@ -15,6 +16,30 @@ public class DangerousPlaceService {
         this.repo = repo;
     }
 
+    // 🔥 NEW METHOD (USED BY YOUR API)
+    public List<DangerousPlace> getPlacesAlongRoute(List<RoutePoint> routePoints) {
+
+        Set<DangerousPlace> result = new HashSet<>();
+
+        double range = 0.01; // ~1km radius
+
+        for (RoutePoint point : routePoints) {
+
+            List<DangerousPlace> nearby = repo
+                    .findByLatitudeBetweenAndLongitudeBetween(
+                            point.getLat() - range,
+                            point.getLat() + range,
+                            point.getLng() - range,
+                            point.getLng() + range
+                    );
+
+            result.addAll(nearby);
+        }
+
+        return new ArrayList<>(result);
+    }
+
+    // ✅ KEEP THIS (used by /nearby API if needed)
     public List<DangerousPlace> getPlacesNearRoute(
             double latMin, double latMax,
             double lonMin, double lonMax
