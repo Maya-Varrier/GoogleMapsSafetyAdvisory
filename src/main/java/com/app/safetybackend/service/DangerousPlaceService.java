@@ -21,7 +21,7 @@ public class DangerousPlaceService {
 
         Set<DangerousPlace> result = new HashSet<>();
 
-        double range = 0.01; // ~1km radius
+        double range = 0.05; // ~5km radius
 
         for (RoutePoint point : routePoints) {
 
