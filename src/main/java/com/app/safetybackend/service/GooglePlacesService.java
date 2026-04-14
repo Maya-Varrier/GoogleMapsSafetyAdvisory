@@ -15,47 +15,45 @@ public class GooglePlacesService {
     @Value("${google.api.key}")
     private String apiKey;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    public GooglePlacesService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     public List<CrowdRiskPlace> fetchNearby(double lat, double lng, int radius, String keyword) {
 
         List<CrowdRiskPlace> list = new ArrayList<>();
 
-        try {
-            String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
-                    + "?location=" + lat + "," + lng
-                    + "&radius=" + radius
-                    + "&keyword=" + keyword
-                    + "&key=" + apiKey;
+        String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+                + "?location=" + lat + "," + lng
+                + "&radius=" + radius
+                + "&keyword=" + keyword
+                + "&key=" + apiKey;
 
-            Map response = restTemplate.getForObject(url, Map.class);
+        Map response = restTemplate.getForObject(url, Map.class);
 
-            if (response == null || !response.containsKey("results")) return list;
+        if (response != null && response.containsKey("results")) {
 
             List<Map<String, Object>> results =
                     (List<Map<String, Object>>) response.get("results");
 
             for (Map<String, Object> r : results) {
 
-                String name = (String) r.get("name");
-
                 Map geometry = (Map) r.get("geometry");
-                Map location = (Map) geometry.get("location");
+                if (geometry == null) continue;
 
-                double placeLat = ((Number) location.get("lat")).doubleValue();
-                double placeLng = ((Number) location.get("lng")).doubleValue();
+                Map location = (Map) geometry.get("location");
+                if (location == null) continue;
 
                 CrowdRiskPlace c = new CrowdRiskPlace();
-                c.setPlaceName(name);
-                c.setLatitude(placeLat);
-                c.setLongitude(placeLng);
-                c.setRiskScore(0.7); // default
+                c.setPlaceName((String) r.get("name"));
+                c.setLatitude(((Number) location.get("lat")).doubleValue());
+                c.setLongitude(((Number) location.get("lng")).doubleValue());
+                c.setRiskScore(0.7);
 
                 list.add(c);
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
         return list;
