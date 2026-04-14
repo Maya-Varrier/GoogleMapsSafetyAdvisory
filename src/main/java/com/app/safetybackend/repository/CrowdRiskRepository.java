@@ -11,4 +11,10 @@ public interface CrowdRiskRepository extends JpaRepository<CrowdRiskPlace, Long>
             double latMin, double latMax,
             double lonMin, double lonMax
     );
+
+    boolean existsByPlaceNameAndLatitudeAndLongitude(
+            String placeName,
+            double latitude,
+            double longitude
+    );
 }
