@@ -7,6 +7,7 @@ import com.app.safetybackend.repository.DangerousPlaceRepository;
 import com.app.safetybackend.repository.CrowdRiskRepository;
 import com.app.safetybackend.dto.SafetyResponse;
 
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -25,6 +26,7 @@ public class SafetyService {
         this.googleService = googleService;
     }
 
+    @Transactional
     public SafetyResponse getRouteAnalysis(List<RoutePoint> routePoints) {
 
         // 🔥 FIX 1: Use Set to avoid duplicates automatically
