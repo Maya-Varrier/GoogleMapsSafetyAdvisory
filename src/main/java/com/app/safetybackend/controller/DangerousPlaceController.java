@@ -1,7 +1,7 @@
 package com.app.safetybackend.controller;
 
 import com.app.safetybackend.entity.DangerousPlace;
-import com.app.safetybackend.model.RoutePoint;
+import com.app.safetybackend.dto.RoutePoint;
 import com.app.safetybackend.service.DangerousPlaceService;
 import org.springframework.web.bind.annotation.*;
 
