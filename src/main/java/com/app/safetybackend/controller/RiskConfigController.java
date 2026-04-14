@@ -2,6 +2,7 @@ package com.app.safetybackend.controller;
 
 import com.app.safetybackend.entity.RiskConfig;
 import com.app.safetybackend.repository.RiskConfigRepository;
+import com.app.safetybackend.service.RiskConfigService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -10,14 +11,14 @@ import java.util.List;
 @RequestMapping("/api/config")
 public class RiskConfigController {
 
-    private final RiskConfigRepository repo;
+    private final RiskConfigService service;
 
-    public RiskConfigController(RiskConfigRepository repo) {
-        this.repo = repo;
+    public RiskConfigController(RiskConfigService service) {
+        this.service = service;
     }
 
-    @GetMapping
-    public List<RiskConfig> getAllConfigs() {
-        return repo.findAll();
+    @GetMapping("/risk")
+    public List<RiskConfig> getConfigs() {
+        return service.getAllConfigs();
     }
 }
