@@ -34,11 +34,13 @@ public class SafetyService {
         double radius = 500;
 
         if (routePoints == null || routePoints.isEmpty()) {
-            return new SafetyResponse(new ArrayList<>(),
-                    new SafetyResponse.Metadata(0, 0));
+            return new SafetyResponse(
+                    new ArrayList<>(),
+                    new SafetyResponse.Metadata(0, 0)
+            );
         }
 
-        int limit = Math.min(routePoints.size(), 3); // 🔥 reduce API calls
+        int limit = Math.min(routePoints.size(), 3); // reduce API calls
 
         for (int i = 0; i < limit; i++) {
 
@@ -47,40 +49,19 @@ public class SafetyService {
             double lng = p.getLng();
 
             // ================= GOOGLE API =================
-            Map<String, Object> response =
-                    googleService.fetchNearbyPlaces(lat, lng, 500,
+            List<CrowdRiskPlace> googleResults =
+                    googleService.fetchNearby(lat, lng, 500,
                             "crowded OR market OR mall");
 
-            if (response != null && response.containsKey("results")) {
+            if (googleResults != null && !googleResults.isEmpty()) {
 
-                List<Map<String, Object>> results =
-                        (List<Map<String, Object>>) response.get("results");
+                for (CrowdRiskPlace c : googleResults) {
 
-                for (Map<String, Object> r : results) {
-
-                    Map<String, Object> geometry =
-                            (Map<String, Object>) r.get("geometry");
-
-                    if (geometry == null) continue;
-
-                    Map<String, Object> location =
-                            (Map<String, Object>) geometry.get("location");
-
-                    if (location == null) continue;
-
-                    String name = (String) r.get("name");
-                    double placeLat = ((Number) location.get("lat")).doubleValue();
-                    double placeLng = ((Number) location.get("lng")).doubleValue();
-
-                    CrowdRiskPlace c = new CrowdRiskPlace();
-                    c.setPlaceName(name);
-                    c.setLatitude(placeLat);
-                    c.setLongitude(placeLng);
-                    c.setRiskScore(0.7);
-
-                    // 🔥 FIX 1: prevent duplicates in DB
+                    // Prevent duplicates in DB
                     if (!repo2.existsByPlaceNameAndLatitudeAndLongitude(
-                            name, placeLat, placeLng)) {
+                            c.getPlaceName(),
+                            c.getLatitude(),
+                            c.getLongitude())) {
 
                         repo2.save(c);
                     }

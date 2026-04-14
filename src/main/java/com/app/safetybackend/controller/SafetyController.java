@@ -3,7 +3,6 @@ package com.app.safetybackend.controller;
 import com.app.safetybackend.dto.SafetyResponse;
 import com.app.safetybackend.dto.RoutePoint;
 import com.app.safetybackend.service.SafetyService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +22,6 @@ public class SafetyController {
 
     @PostMapping("/route")
     public SafetyResponse analyzeRoute(@RequestBody List<RoutePoint> points) {
-        return safetyService.analyze(points);
+        return safetyService.getRouteAnalysis(points);
     }
 }
