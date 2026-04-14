@@ -2,7 +2,7 @@ package com.app.safetybackend.service;
 
 import com.app.safetybackend.entity.DangerousPlace;
 import com.app.safetybackend.repository.DangerousPlaceRepository;
-import com.app.safetybackend.model.RoutePoint; // ✅ ADD THIS
+import com.app.safetybackend.dto.RoutePoint;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
