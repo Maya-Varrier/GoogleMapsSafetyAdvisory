@@ -15,11 +15,14 @@ import java.util.List;
 @RequestMapping("/safety")
 public class SafetyController {
 
-    @Autowired
-    private SafetyService service;
+    private final SafetyService safetyService;
 
-    @PostMapping("/route-analysis")
-    public SafetyResponse analyze(@RequestBody List<RoutePoint> routePoints) {
-        return service.getRouteAnalysis(routePoints);
+    public SafetyController(SafetyService safetyService) {
+        this.safetyService = safetyService;
+    }
+
+    @PostMapping("/route")
+    public SafetyResponse analyzeRoute(@RequestBody List<RoutePoint> points) {
+        return safetyService.analyze(points);
     }
 }

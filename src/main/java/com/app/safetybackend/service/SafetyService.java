@@ -20,7 +20,8 @@ public class SafetyService {
     private final GooglePlacesService googleService;
 
     public SafetyService(DangerousPlaceRepository repo1,
-                         CrowdRiskRepository repo2, GooglePlacesService googleService) {
+                         CrowdRiskRepository repo2,
+                         GooglePlacesService googleService) {
         this.repo1 = repo1;
         this.repo2 = repo2;
         this.googleService = googleService;
@@ -29,26 +30,26 @@ public class SafetyService {
     @Transactional
     public SafetyResponse getRouteAnalysis(List<RoutePoint> routePoints) {
 
-        // 🔥 FIX 1: Use Set to avoid duplicates automatically
         Set<DangerousPlace> result = new HashSet<>();
-
-        double radius = 500; // meters
+        double radius = 500;
 
         if (routePoints == null || routePoints.isEmpty()) {
             return new SafetyResponse(new ArrayList<>(),
                     new SafetyResponse.Metadata(0, 0));
         }
 
-        int limit = Math.min(routePoints.size(), 3);
+        int limit = Math.min(routePoints.size(), 3); // 🔥 reduce API calls
 
         for (int i = 0; i < limit; i++) {
-            RoutePoint p = routePoints.get(i);
 
+            RoutePoint p = routePoints.get(i);
             double lat = p.getLat();
             double lng = p.getLng();
-            // ================= GOOGLE API FETCH (ADD HERE) =================
+
+            // ================= GOOGLE API =================
             Map<String, Object> response =
-                    googleService.fetchNearbyPlaces(lat, lng, 500, "crowded OR market OR mall");
+                    googleService.fetchNearbyPlaces(lat, lng, 500,
+                            "crowded OR market OR mall");
 
             if (response != null && response.containsKey("results")) {
 
@@ -57,12 +58,19 @@ public class SafetyService {
 
                 for (Map<String, Object> r : results) {
 
-                    Map<String, Object> geometry = (Map<String, Object>) r.get("geometry");
-                    Map<String, Object> location = (Map<String, Object>) geometry.get("location");
+                    Map<String, Object> geometry =
+                            (Map<String, Object>) r.get("geometry");
+
+                    if (geometry == null) continue;
+
+                    Map<String, Object> location =
+                            (Map<String, Object>) geometry.get("location");
+
+                    if (location == null) continue;
 
                     String name = (String) r.get("name");
-                    double placeLat = (double) location.get("lat");
-                    double placeLng = (double) location.get("lng");
+                    double placeLat = ((Number) location.get("lat")).doubleValue();
+                    double placeLng = ((Number) location.get("lng")).doubleValue();
 
                     CrowdRiskPlace c = new CrowdRiskPlace();
                     c.setPlaceName(name);
@@ -70,12 +78,16 @@ public class SafetyService {
                     c.setLongitude(placeLng);
                     c.setRiskScore(0.7);
 
-                    if (!repo2.existsByPlaceNameAndLatitudeAndLongitude(name, placeLat, placeLng)) {
+                    // 🔥 FIX 1: prevent duplicates in DB
+                    if (!repo2.existsByPlaceNameAndLatitudeAndLongitude(
+                            name, placeLat, placeLng)) {
+
                         repo2.save(c);
                     }
                 }
             }
-            // ================= END GOOGLE FETCH =================
+
+            // ================= BOUNDING BOX =================
             double latDelta = radius / 111000.0;
             double lngDelta = radius / (111000.0 * Math.cos(Math.toRadians(lat)));
 
@@ -84,22 +96,22 @@ public class SafetyService {
             double minLng = lng - lngDelta;
             double maxLng = lng + lngDelta;
 
-            // ===== TABLE 1 =====
+            // ================= DB TABLE 1 =================
             List<DangerousPlace> db1 =
                     repo1.findByLatitudeBetweenAndLongitudeBetween(
                             minLat, maxLat, minLng, maxLng
                     );
 
-            // ===== TABLE 2 =====
+            // ================= DB TABLE 2 =================
             List<CrowdRiskPlace> db2 =
                     repo2.findByLatitudeBetweenAndLongitudeBetween(
                             minLat, maxLat, minLng, maxLng
                     );
 
-            // 🔥 FIX 2: Correct logging
-            System.out.println("DB1 size: " + db1.size() + " | DB2 size: " + db2.size());
+            System.out.println("DB1 size: " + db1.size() +
+                    " | DB2 size: " + db2.size());
 
-            // ===== FILTER + ADD TABLE 1 =====
+            // ================= FILTER TABLE 1 =================
             for (DangerousPlace place : db1) {
                 if (distance(lat, lng,
                         place.getLatitude(),
@@ -109,7 +121,7 @@ public class SafetyService {
                 }
             }
 
-            // ===== FILTER + ADD TABLE 2 =====
+            // ================= FILTER TABLE 2 =================
             for (CrowdRiskPlace c : db2) {
                 if (distance(lat, lng,
                         c.getLatitude(),
@@ -122,15 +134,10 @@ public class SafetyService {
 
         List<DangerousPlace> finalList = new ArrayList<>(result);
 
-        SafetyResponse.Metadata meta =
-                new SafetyResponse.Metadata(finalList.size(), 0);
-
-        return new SafetyResponse(finalList, meta);
-    }
-
-    // 🔥 OPTIONAL: Save Google API results into DB
-    public void saveCrowdRiskPlace(CrowdRiskPlace place) {
-        repo2.save(place);
+        return new SafetyResponse(
+                finalList,
+                new SafetyResponse.Metadata(finalList.size(), 0)
+        );
     }
 
     // ================= CONVERTER =================
