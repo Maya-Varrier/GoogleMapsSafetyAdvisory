@@ -25,16 +25,14 @@ public class SafetyService {
 
     public SafetyResponse getRouteAnalysis(List<RoutePoint> routePoints) {
 
-        Set<DangerousPlace> result = new HashSet<>();
-
-        double radius = 200; // meters
+        List<DangerousPlace> result = new ArrayList<>();
+        double radius = 500; // meters
 
         for (RoutePoint p : routePoints) {
 
             double lat = p.getLat();
             double lng = p.getLng();
 
-            // 🔹 Bounding box calculation
             double latDelta = radius / 111000.0;
             double lngDelta = radius / (111000.0 * Math.cos(Math.toRadians(lat)));
 
@@ -43,37 +41,53 @@ public class SafetyService {
             double minLng = lng - lngDelta;
             double maxLng = lng + lngDelta;
 
-            // ================= DB TABLE 1 =================
-            List<DangerousPlace> db1Candidates =
+            // ===== TABLE 1 =====
+            List<DangerousPlace> db1 =
                     repo1.findByLatitudeBetweenAndLongitudeBetween(
                             minLat, maxLat, minLng, maxLng
                     );
 
-            for (DangerousPlace place : db1Candidates) {
+            for (DangerousPlace place : db1) {
                 if (distance(lat, lng, place.getLatitude(), place.getLongitude()) <= radius) {
-                    result.add(place);
+                    addUnique(result, place);
                 }
             }
 
-            // ================= DB TABLE 2 =================
-            List<CrowdRiskPlace> db2Candidates =
+            // ===== TABLE 2 =====
+            List<CrowdRiskPlace> db2 =
                     repo2.findByLatitudeBetweenAndLongitudeBetween(
                             minLat, maxLat, minLng, maxLng
                     );
 
-            for (CrowdRiskPlace c : db2Candidates) {
+            for (CrowdRiskPlace c : db2) {
                 if (distance(lat, lng, c.getLatitude(), c.getLongitude()) <= radius) {
-                    result.add(convert(c));
+                    addUnique(result, convert(c));
                 }
+            }
+
+            // 🔥 DEBUG LOG (ADD THIS)
+            System.out.println("DB1: " + db1.size() + ", DB2: " + db2.size());
+        }
+
+        SafetyResponse.Metadata meta =
+                new SafetyResponse.Metadata(result.size(), 0);
+
+        return new SafetyResponse(result, meta);
+    }
+
+    private void addUnique(List<DangerousPlace> list, DangerousPlace newPlace) {
+
+        for (DangerousPlace p : list) {
+            if (p.getPlaceName() != null &&
+                    p.getPlaceName().equalsIgnoreCase(newPlace.getPlaceName()) &&
+                    Math.abs(p.getLatitude() - newPlace.getLatitude()) < 0.0001 &&
+                    Math.abs(p.getLongitude() - newPlace.getLongitude()) < 0.0001) {
+
+                return; // duplicate
             }
         }
 
-        List<DangerousPlace> finalList = new ArrayList<>(result);
-
-        SafetyResponse.Metadata meta =
-                new SafetyResponse.Metadata(finalList.size(), 0);
-
-        return new SafetyResponse(finalList, meta);
+        list.add(newPlace);
     }
 
     // ================= CONVERTER =================
