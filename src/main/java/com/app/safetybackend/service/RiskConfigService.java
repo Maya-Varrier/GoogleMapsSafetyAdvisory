@@ -1,22 +1,20 @@
-package com.app.safetybackend.controller;
+package com.app.safetybackend.service;
 
 import com.app.safetybackend.entity.RiskConfig;
 import com.app.safetybackend.repository.RiskConfigRepository;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/config")
-public class RiskConfigController {
+@Service
+public class RiskConfigService {
 
     private final RiskConfigRepository repo;
 
-    public RiskConfigController(RiskConfigRepository repo) {
+    public RiskConfigService(RiskConfigRepository repo) {
         this.repo = repo;
     }
 
-    @GetMapping
     public List<RiskConfig> getAllConfigs() {
         return repo.findAll();
     }
