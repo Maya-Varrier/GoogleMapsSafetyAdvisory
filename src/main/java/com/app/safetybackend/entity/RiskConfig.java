@@ -14,6 +14,7 @@ public class RiskConfig {
     private int radius;
     private String category;
     private String reason;
+    @Column(name = "risk_score")
     private double riskScore;
 
     // Getters
