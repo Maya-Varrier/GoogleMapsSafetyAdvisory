@@ -21,10 +21,4 @@ public class PlacesController {
         this.service = service;
         this.repo = repo;
     }
-
-    @GetMapping("/fetch-places")
-    public List<CrowdRiskPlace> fetch(@RequestParam double lat, @RequestParam double lng) {
-        service.fetchAndSave(lat, lng);
-        return repo.findAll();
-    }
 }
