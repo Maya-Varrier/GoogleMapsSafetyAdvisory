@@ -19,6 +19,6 @@ public class RiskDataScheduler {
         System.out.println("Refreshing crowd risk data...");
 
         // Example: Kochi location
-        service.fetchAndSave(9.9312, 76.2673);
+        service.fetchFromRiskConfig(9.9312, 76.2673);
     }
 }
