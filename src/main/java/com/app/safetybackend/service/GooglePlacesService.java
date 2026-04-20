@@ -1,7 +1,9 @@
 package com.app.safetybackend.service;
 
 import com.app.safetybackend.entity.CrowdRiskPlace;
+import com.app.safetybackend.entity.RiskConfig;
 import com.app.safetybackend.repository.CrowdRiskRepository;
+import com.app.safetybackend.repository.RiskConfigRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -11,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-//@Service
+@Service
 public class GooglePlacesService {
 
     @Value("${google.api.key}")
@@ -19,12 +21,16 @@ public class GooglePlacesService {
 
     private final RestTemplate restTemplate;
     private final CrowdRiskRepository repo;
+    private final RiskConfigRepository riskConfigRepository;
 
-    // ✅ Constructor Injection (best practice)
+    // ✅ Constructor Injection
     @Autowired
-    public GooglePlacesService(RestTemplate restTemplate, CrowdRiskRepository repo) {
+    public GooglePlacesService(RestTemplate restTemplate,
+                               CrowdRiskRepository repo,
+                               RiskConfigRepository riskConfigRepository) {
         this.restTemplate = restTemplate;
         this.repo = repo;
+        this.riskConfigRepository = riskConfigRepository;
     }
 
     // ✅ Fetch only (no DB save)
@@ -75,13 +81,36 @@ public class GooglePlacesService {
         return list;
     }
 
-    // ✅ Fetch + Save into DB
-    public void fetchAndSave(double lat, double lng) {
+    // ✅ Fetch + Save using risk_config table
+    public void fetchFromRiskConfig(double lat, double lng) {
+
+        List<RiskConfig> configs = riskConfigRepository.findAll();
+
+        for (RiskConfig config : configs) {
+
+            String keywordGroup = config.getKeyword();
+            if (keywordGroup == null || keywordGroup.isEmpty()) continue;
+
+            // Split using " OR "
+            String[] keywords = keywordGroup.split("\\s+OR\\s+");
+
+            for (String k : keywords) {
+
+                String keyword = k.trim();
+                if (keyword.isEmpty()) continue;
+
+                fetchAndSaveByKeyword(lat, lng, keyword);
+            }
+        }
+    }
+
+    // ✅ Helper method for each keyword
+    private void fetchAndSaveByKeyword(double lat, double lng, String keyword) {
 
         String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
                 + "?location=" + lat + "," + lng
                 + "&radius=1500"
-                + "&type=restaurant"
+                + "&keyword=" + keyword
                 + "&key=" + apiKey;
 
         Map<String, Object> response = restTemplate.getForObject(url, Map.class);
@@ -109,7 +138,7 @@ public class GooglePlacesService {
 
             int riskScore = calculateRisk(place);
 
-            // ✅ Prevent duplicate entries
+            // ✅ Prevent duplicates
             boolean exists = repo.existsByPlaceNameAndLatitudeAndLongitude(
                     name, placeLat, placeLng
             );
@@ -121,7 +150,7 @@ public class GooglePlacesService {
                 entity.setLongitude(placeLng);
                 entity.setRiskScore(riskScore);
 
-                //repo.save(entity);
+                repo.save(entity); // ✅ IMPORTANT: saving enabled
             }
         }
     }
