@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Service
+//@Service
 public class GooglePlacesService {
 
     @Value("${google.api.key}")
@@ -121,7 +121,7 @@ public class GooglePlacesService {
                 entity.setLongitude(placeLng);
                 entity.setRiskScore(riskScore);
 
-                repo.save(entity);
+                //repo.save(entity);
             }
         }
     }
